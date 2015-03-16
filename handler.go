@@ -18,9 +18,10 @@ type shopifyOauthHandler struct {
 func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Handler, persistence ShopifyPersistence, configOptions ...func(*ShopifyConfig)) *shopifyOauthHandler {
 	// Set some sensible defaults.
 	config := &ShopifyConfig{
-		InstallationURI: "/install",
+		InstallationURI: "/",
 		CallbackURI:     "/",
 		HelpURI:         "/help",
+		Webhooks:        make(map[string]string),
 	}
 
 	// Apply the custom config functions passed.
@@ -37,6 +38,7 @@ func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Han
 }
 
 func (s *shopifyOauthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	// If the user has authenticated via the initial app Callback, the app
 	// should have registered a valid session for the user.  As long as that
 	// session is active, we do not need to validate requests from said user.

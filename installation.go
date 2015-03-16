@@ -43,5 +43,16 @@ func (s *shopifyOauthHandler) performInstallation(shop, code string) error {
 		return ErrInvalidResponseData
 	}
 
-	return s.ShopifyPersistence.CreateInstallation(shop, responseData.AccessToken)
+	if err = s.ShopifyPersistence.CreateInstallation(shop, responseData.AccessToken); err != nil {
+		return ErrBadPersistence
+	}
+
+	// Create our webhooks
+	for webhook, address := range s.config.Webhooks {
+		if err = createWebhook(shop, responseData.AccessToken, webhook, address); err != nil {
+			return &ErrShopifyHTTPRequestFailed{err: err}
+		}
+	}
+
+	return nil
 }

@@ -18,6 +18,9 @@ var (
 	// ErrInvalidResponseData is returned when a json.Unmarshal fails on a
 	// response from shopify
 	ErrInvalidResponseData = errors.New("The response data returned from shopify was in an unexpected format.")
+	// ErrBadPersistence is returned when the implementation of persistence
+	// passed to shoauth fails for some reason.
+	ErrBadPersistence = errors.New("The persistence passed to shoauth failed to perform an action.")
 )
 
 // ErrShopifyHTTPRequestFailed is returned when an HTTP request to a
