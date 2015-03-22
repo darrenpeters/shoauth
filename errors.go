@@ -24,7 +24,7 @@ var (
 )
 
 // ErrShopifyHTTPRequestFailed is returned when an HTTP request to a
-// shpify shop fails.
+// shopify shop fails.
 type ErrShopifyHTTPRequestFailed struct {
 	err        error
 	statusCode int
