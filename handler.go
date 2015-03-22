@@ -86,10 +86,8 @@ func (s *shopifyOauthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		} else {
 			if s.config.IsEmbedded {
 				http.Redirect(w, r, "https://"+r.FormValue("shop")+"/admin/apps/"+s.config.ClientID, http.StatusMovedPermanently)
-				return
 			} else {
 				s.successHandler.ServeHTTP(w, r)
-				return
 			}
 		}
 		// If this is not an installation request, we must validate that it has
