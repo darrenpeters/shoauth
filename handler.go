@@ -1,6 +1,9 @@
 package shoauth
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 type shopifyOauthHandler struct {
 	successHandler http.Handler
@@ -58,13 +61,7 @@ func (s *shopifyOauthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// Construct our scopes parameter
 		scopeParameter := ""
 		if len(s.config.Scopes) > 0 {
-			scopeParameter = "&scope="
-			for i, scope := range s.config.Scopes {
-				scopeParameter += scope
-				if (i + 1) < len(s.config.Scopes) {
-					scopeParameter += ","
-				}
-			}
+			scopeParameter = "&scope=" + strings.Join(s.config.Scopes, ",")
 		}
 		redirectURL := "https://" + r.FormValue("shop") + "/admin/oauth/authorize?client_id=" + s.config.ClientID + scopeParameter
 		if len(s.config.RedirectURI) > 0 {
