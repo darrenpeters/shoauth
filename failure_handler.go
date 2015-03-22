@@ -14,5 +14,5 @@ func DefaultFailureHandler() http.Handler {
 }
 
 func (f *failureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }

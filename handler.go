@@ -18,10 +18,9 @@ type shopifyOauthHandler struct {
 func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Handler, persistence ShopifyPersistence, configOptions ...func(*ShopifyConfig)) *shopifyOauthHandler {
 	// Set some sensible defaults.
 	config := &ShopifyConfig{
-		InstallationURI: "/",
-		CallbackURI:     "/",
-		HelpURI:         "/help",
-		Webhooks:        make(map[string]string),
+		RedirectURI: "",
+		HelpURI:     "/help",
+		Webhooks:    make(map[string]string),
 	}
 
 	// Apply the custom config functions passed.
@@ -48,24 +47,50 @@ func (s *shopifyOauthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Installation requests can be confused by the fact that the installation
-	// URI can theoretically be the same as the callback URI.  Thus we need to
-	// attempt installation in two scenarios:
-	// 1. The request URI is equal to the installation URI, and the
-	//    installation URI is different than the callback URI - this is the
-	//    basic installation scenario.
-	// 2. The request URI is equal to the installation URI, and the
-	//    installation URI is equal to the callback URI.  In this instance, in
-	//    order to confirm that an installation is required, we validate that
-	//    an installation does not exist for the shop making the request.
-	if (r.URL.Path == s.config.InstallationURI && s.config.InstallationURI != s.config.CallbackURI) ||
-		(r.URL.Path == s.config.InstallationURI && s.config.InstallationURI == s.config.CallbackURI && !s.InstallationExists(r.FormValue("shop"))) {
+	if len(r.FormValue("shop")) == 0 {
+		s.failureHandler.ServeHTTP(w, r)
+		return
+	}
+
+	// If this shop has not installed our app, and we do not have a code
+	// parameter, redirect them to the install page
+	if !s.InstallationExists(r.FormValue("shop")) && len(r.FormValue("code")) == 0 {
+		// Construct our scopes parameter
+		scopeParameter := ""
+		if len(s.config.Scopes) > 0 {
+			scopeParameter = "&scope="
+			for i, scope := range s.config.Scopes {
+				scopeParameter += scope
+				if (i + 1) < len(s.config.Scopes) {
+					scopeParameter += ","
+				}
+			}
+		}
+		redirectURL := "https://" + r.FormValue("shop") + "/admin/oauth/authorize?client_id=" + s.config.ClientID + scopeParameter
+		if len(s.config.RedirectURI) > 0 {
+			redirectURL += "&redirect_uri=" + s.config.RedirectURI
+		}
+		http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
+		return
+	}
+
+	// If this shop has not installed our app, and we do have a code parameter,
+	// attempt an installation.
+	if !s.InstallationExists(r.FormValue("shop")) {
 		// We perform the installation - if it fails, call the app's
-		// failure handler.  Otherwise, we redirect to the app's callback URI.
+		// failure handler.  Otherwise, we open up the app.  If it's embedded,
+		// we do this within the admin interface.  Otherwise, just call the app
+		// handler.
 		if err := s.performInstallation(r.FormValue("shop"), r.FormValue("code")); err != nil {
 			s.failureHandler.ServeHTTP(w, r)
 		} else {
-			s.successHandler.ServeHTTP(w, r)
+			if s.config.IsEmbedded {
+				http.Redirect(w, r, "https://"+r.FormValue("shop")+"/admin/apps/"+s.config.ClientID, http.StatusMovedPermanently)
+				return
+			} else {
+				s.successHandler.ServeHTTP(w, r)
+				return
+			}
 		}
 		// If this is not an installation request, we must validate that it has
 		// actually come from shopify according to their predefined rules.
