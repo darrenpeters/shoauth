@@ -24,6 +24,7 @@ func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Han
 		RedirectURI: "",
 		HelpURI:     "/help",
 		Webhooks:    make(map[string]string),
+		Scripts:     make(map[string][]string),
 	}
 
 	// Apply the custom config functions passed.

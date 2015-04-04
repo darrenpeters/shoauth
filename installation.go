@@ -54,5 +54,13 @@ func (s *shopifyOauthHandler) performInstallation(shop, code string) error {
 		}
 	}
 
+	for event, sources := range s.config.Scripts {
+		for _, source := range sources {
+			if err = createScriptTag(shop, responseData.AccessToken, event, source); err != nil {
+				return &ErrShopifyHTTPRequestFailed{err: err}
+			}
+		}
+	}
+
 	return nil
 }
