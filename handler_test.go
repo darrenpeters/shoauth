@@ -45,22 +45,6 @@ func (t *testPersistence) CreateInstallation(shopID string, accessToken string) 
 	return t.create
 }
 
-func (t *testPersistence) HasValidSession(r *http.Request) bool {
-	return t.session
-}
-
-func TestValidSession(t *testing.T) {
-	p := testPersistence{
-		exists:  true,
-		create:  errors.New("Installation already exists!"),
-		session: true,
-	}
-	handler := NewShopifyOauthHandler(&expectedSuccessHandler{}, &unexpectedFailureHandler{t: t}, &p)
-	testServer := httptest.NewServer(handler)
-	defer testServer.Close()
-	http.Get(testServer.URL + "/install")
-}
-
 func TestAlreadyInstalled(t *testing.T) {
 	p := testPersistence{
 		exists:  true,

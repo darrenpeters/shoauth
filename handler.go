@@ -22,7 +22,6 @@ func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Han
 	// Set some sensible defaults.
 	config := &ShopifyConfig{
 		RedirectURI: "",
-		HelpURI:     "/help",
 		Webhooks:    make(map[string]string),
 		Scripts:     make(map[string][]string),
 	}
@@ -41,15 +40,6 @@ func NewShopifyOauthHandler(successHandler http.Handler, failureHandler http.Han
 }
 
 func (s *shopifyOauthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	// If the user has authenticated via the initial app Callback, the app
-	// should have registered a valid session for the user.  As long as that
-	// session is active, we do not need to validate requests from said user.
-	// The help page is also static and unsigned - we can just display it.
-	if s.HasValidSession(r) || r.URL.Path == s.config.HelpURI {
-		s.successHandler.ServeHTTP(w, r)
-		return
-	}
 
 	if len(r.FormValue("shop")) == 0 {
 		s.failureHandler.ServeHTTP(w, r)
